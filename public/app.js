@@ -104,14 +104,76 @@ function renderDates() {
   }
 }
 
+// ---------- Zaman & Slot Yardımcıları ----------
+const pad = (n) => String(n).padStart(2, '0');
+const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+const toHHMM = (m) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+const istanbulNow = () => new Date(Date.now() + 3 * 3600 * 1000);
+const todayStr = () => { const d = istanbulNow(); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`; };
+const nowMin = () => { const d = istanbulNow(); return d.getUTCHours() * 60 + d.getUTCMinutes(); };
+
+function computeSlots(date, dur, active) {
+  const dow = new Date(date + 'T00:00:00Z').getUTCDay();
+  const hours = cfg.hours || {};
+  const h = hours[String(dow)];
+  if (!h || (cfg.closedDates || []).includes(date)) return [];
+  const open = toMin(h[0]), close = toMin(h[1]);
+  const step = cfg.slotMinutes || 30;
+  const cap = cfg.capacity || 1;
+  const t = cfg.today;
+  const lead = cfg.minLeadMinutes ?? 60;
+  const out = [];
+  for (let s = open; s + dur <= close; s += step) {
+    if (date === t && s < nowMin() + lead) continue;
+    const busy = active.filter((a) => {
+      const as = toMin(a.time);
+      return s < as + a.duration && as < s + dur;
+    }).length;
+    if (busy < cap) out.push(toHHMM(s));
+  }
+  return out;
+}
+
+function normalizePhone(raw) {
+  let d = String(raw || '').replace(/\D/g, '');
+  if (d.startsWith('00')) d = d.slice(2);
+  if (d.startsWith('90') && d.length === 12) d = d.slice(2);
+  if (d.startsWith('0') && d.length === 11) d = d.slice(1);
+  return /^5\d{9}$/.test(d) ? '90' + d : null;
+}
+const ownerWhatsAppLink = (a) => `https://wa.me/905445990630?text=${encodeURIComponent(`Merhaba, siteden randevu aldım 🌸\nAd: ${a.name}\nHizmet: ${a.serviceNames.join(', ')}\nTarih: ${pretty(a.date)} ${a.time}${a.note ? '\nNot: ' + a.note : ''}`)}`;
+
+async function sendEmailNotification(a) {
+  try {
+    // Vercel serverless /api/notify (varsa)
+    fetch('/api/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(a)
+    }).catch(() => {});
+  } catch {}
+}
+
 async function selectDate(d) {
   state.date = d; state.time = null; renderDates(); update();
   const t = $('#times'); t.innerHTML = '<p class="hint">Saatler yükleniyor…</p>';
   try {
-    const r = await get(`/api/slots?date=${d}&services=${[...state.services].join(',')}`);
+    let slots = [];
+    if (typeof db !== 'undefined' && db) {
+      const snapshot = await db.collection('appointments').where('date', '==', d).get();
+      const active = [];
+      snapshot.forEach((doc) => {
+        const item = doc.data();
+        if (item.status !== 'cancelled') active.push(item);
+      });
+      slots = computeSlots(d, duration(), active);
+    } else {
+      const r = await get(`/api/slots?date=${d}&services=${[...state.services].join(',')}`);
+      slots = r.slots || [];
+    }
     t.innerHTML = '';
-    if (!r.slots.length) t.append(el('p', { class: 'hint' }, 'Bu gün için uygun saat kalmadı. Lütfen başka bir gün seçin.'));
-    r.slots.forEach((s) => t.append(el('button', { type: 'button', class: 't', 'aria-pressed': 'false', onclick: (e) => { state.time = s; t.querySelectorAll('.t').forEach((b) => b.setAttribute('aria-pressed', 'false')); e.currentTarget.setAttribute('aria-pressed', 'true'); update(); } }, s)));
+    if (!slots.length) t.append(el('p', { class: 'hint' }, 'Bu gün için uygun saat kalmadı. Lütfen başka bir gün seçin.'));
+    slots.forEach((s) => t.append(el('button', { type: 'button', class: 't', 'aria-pressed': 'false', onclick: (e) => { state.time = s; t.querySelectorAll('.t').forEach((b) => b.setAttribute('aria-pressed', 'false')); e.currentTarget.setAttribute('aria-pressed', 'true'); update(); } }, s)));
   } catch (e) { t.innerHTML = ''; t.append(el('p', { class: 'hint' }, e.message)); }
 }
 
@@ -136,19 +198,52 @@ function update() {
 async function submit() {
   const f = $('#form'); const err = $('#err'); err.textContent = '';
   const body = { services: [...state.services], date: state.date, time: state.time, name: f.name.value, phone: f.phone.value, note: f.note.value, website: f.website.value };
+  if (body.website) return goStep(4);
   if (body.name.trim().length < 2) return (err.textContent = 'Lütfen adınızı yazın.');
-  if (!/^(\+?90|0)?\s?5\d{2}[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}$/.test(body.phone.trim())) return (err.textContent = 'Geçerli bir cep telefonu girin (5XX XXX XX XX).');
+  const phone = normalizePhone(body.phone);
+  if (!phone) return (err.textContent = 'Geçerli bir cep telefonu girin (5XX XXX XX XX).');
   const b = $('#nextBtn'); b.disabled = true; b.textContent = 'Gönderiliyor…';
+
+  const picked = [...state.services].map((id) => cfg.services.find((s) => s.id === id)).filter(Boolean);
+  const dur = picked.reduce((acc, x) => acc + x.duration, 0);
+
   try {
-    const r = await fetch('/api/appointments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    const j = await r.json();
-    if (!r.ok) { err.textContent = j.error || 'Bir hata oluştu.'; if (r.status === 409) { goStep(2); selectDate(state.date); } b.disabled = false; b.textContent = 'Randevuyu Gönder'; return; }
-    const a = j.appointment;
+    let apptId = '';
+    const apptData = {
+      services: [...state.services],
+      serviceNames: picked.map((s) => s.name),
+      date: state.date,
+      time: state.time,
+      duration: dur,
+      name: body.name.trim().slice(0, 60),
+      phone,
+      note: (body.note || '').trim().slice(0, 300),
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+
+    if (typeof db !== 'undefined' && db) {
+      // 1. Firebase Firestore üzerine kalıcı kayıt
+      const docRef = await db.collection('appointments').add(apptData);
+      apptId = docRef.id;
+    } else {
+      // 2. Server API yedeği
+      const r = await fetch('/api/appointments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Hata');
+      apptId = j.appointment.id;
+    }
+
+    const a = { id: apptId, ...apptData };
+
+    // Bildirim mailini tetikle
+    sendEmailNotification(a);
+
     $('#doneText').textContent = `${a.name}, ${pretty(a.date)} saat ${a.time} için ${a.serviceNames.join(', ')} randevu talebiniz bize ulaştı.`;
-    $('#waBtn').href = j.whatsappLink;
+    $('#waBtn').href = ownerWhatsAppLink(a);
     $('#icsBtn').onclick = () => downloadIcs(a);
     goStep(4);
-  } catch { err.textContent = 'Bağlantı hatası. Lütfen tekrar deneyin.'; b.disabled = false; b.textContent = 'Randevuyu Gönder'; }
+  } catch (e) { err.textContent = e.message || 'Bağlantı hatası. Lütfen tekrar deneyin.'; b.disabled = false; b.textContent = 'Randevuyu Gönder'; }
 }
 
 function downloadIcs(a) {
@@ -168,7 +263,10 @@ function observe() {
 (async function init() {
   window.addEventListener('scroll', () => $('#nav').classList.toggle('scrolled', scrollY > 20), { passive: true });
   if (matchMedia('(pointer:fine)').matches) window.addEventListener('pointermove', (e) => { const g = $('.glow'); g.style.left = e.clientX + 'px'; g.style.top = e.clientY + 'px'; });
-  try { cfg = await get('/api/config'); } catch { $('#cards').textContent = 'Sunucuya ulaşılamadı.'; return; }
+  try {
+    cfg = await fetch('config.json').then((r) => r.json()).catch(() => get('/api/config'));
+    if (!cfg.today) cfg.today = todayStr();
+  } catch { $('#cards').textContent = 'Sunucuya ulaşılamadı.'; return; }
   renderStatic(); renderChips(); update(); initImages(); observe();
   $('#nextBtn').addEventListener('click', () => (state.step === 3 ? submit() : goStep(state.step + 1)));
   $('#backBtn').addEventListener('click', () => goStep(state.step - 1));
