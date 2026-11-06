@@ -1,0 +1,25 @@
+{
+  "salon": {
+    "name": "Zerda Koçkaya",
+    "tagline": "Makeup · Hair · Art",
+    "phone": "0544 599 06 30",
+    "phoneIntl": "905445990630",
+    "instagram": "zerdamakeuphairart",
+    "instagramUrl": "https://www.instagram.com/zerdamakeuphairart/",
+    "address": "İpek Yolu, Hafize Mahallesi, Uzun Sokak, No 67A, Van",
+    "mapQuery": "Hafize Mahallesi Uzun Sokak 67A Van"
+  },
+  "hours": {
+    "1": ["10:00", "19:00"],
+    "2": ["10:00", "19:00"],
+    "3": ["10:00", "19:00"],
+    "4": ["10:00", "19:00"],
+    "5": ["10:00", "19:00"],
+    "6": ["10:00", "19:00"]
+  },
+  "closedDates": [],
+  "slotMinutes": 30,
+  "capacity": 1,
+  "maxAdvanceDays": 30,
+  "minLeadMinutes": 60
+}

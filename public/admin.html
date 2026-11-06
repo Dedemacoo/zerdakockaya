@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Zerda · Yönetim Paneli</title>
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#f7e9d7;--card:#fbf3e7;--pink:#e8799e;--deep:#b83d6b;--blush:#f9d3dd;--ink:#3a1f2b;--ink2:#7a5563;--line:rgba(58,31,43,.14)}
+*{box-sizing:border-box;margin:0}
+body{font-family:Manrope,system-ui,sans-serif;background:var(--cream);color:var(--ink);min-height:100vh}
+h1,h2{font-family:Fraunces,Georgia,serif;font-weight:400}
+.wrap{max-width:980px;margin:0 auto;padding:24px 16px 80px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+header h1{font-size:2rem}header h1 em{color:var(--deep)}
+button,.b{font:600 .88rem Manrope,sans-serif;padding:9px 16px;border-radius:999px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;text-decoration:none;display:inline-block}
+button:hover,.b:hover{background:var(--ink);color:var(--cream)}
+.primary{background:linear-gradient(135deg,var(--pink),var(--deep));color:#fff;border-color:transparent}.primary:hover{background:var(--deep);color:#fff}
+.danger{border-color:#b3123f;color:#b3123f}.danger:hover{background:#b3123f;color:#fff}
+.login{max-width:360px;margin:18vh auto;background:var(--card);padding:30px;border-radius:28px;display:grid;gap:14px;border:1px solid var(--line)}
+input{font:500 1rem Manrope;padding:13px 15px;border-radius:14px;border:1.5px solid var(--line);background:var(--cream);width:100%}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tabs button[aria-pressed=true]{background:var(--deep);color:#fff;border-color:var(--deep)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--card);padding:16px 18px;border-radius:20px;border:1px solid var(--line)}.stat b{font:600 2rem Fraunces,serif;color:var(--deep);display:block}.stat span{font-size:.8rem;color:var(--ink2)}
+.day{margin:22px 0 8px;font:italic 1.3rem Fraunces,serif;color:var(--deep)}
+.item{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 18px;display:grid;grid-template-columns:70px 1fr auto;gap:14px;align-items:center;margin-bottom:10px}
+.time{font:600 1.35rem Fraunces,serif}.time small{display:block;font:500 .72rem Manrope;color:var(--ink2)}
+.who b{display:block}.who span{font-size:.88rem;color:var(--ink2)}
+.tag{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:999px;margin-left:8px;vertical-align:middle}
+.pending{background:#ffe6a8}.confirmed{background:#c9ecd0}.cancelled{background:#f5c3cd}.done{background:#dcd3e8}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.empty{text-align:center;color:var(--ink2);padding:50px 0}
+pre{background:var(--card);padding:16px;border-radius:16px;white-space:pre-wrap;font-size:.8rem;border:1px solid var(--line)}
+@media(max-width:620px){.item{grid-template-columns:1fr}.acts{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script src="admin.js"></script>
+</body>
+</html>

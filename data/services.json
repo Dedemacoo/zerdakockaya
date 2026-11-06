@@ -1,0 +1,10 @@
+[
+  { "id": "makyaj", "name": "Makyaj", "icon": "lip", "duration": 60, "desc": "Günlük, davet ve özel gün makyajı. Cildinize ve tarzınıza göre kişiye özel uygulama." },
+  { "id": "sac", "name": "Saç Tasarımı", "icon": "hair", "duration": 60, "desc": "Fön, topuz, dalga ve özel gün saç modelleri; yüz hatlarınıza uygun tasarım." },
+  { "id": "protez-tirnak", "name": "Protez Tırnak", "icon": "nail", "duration": 120, "desc": "Dayanıklı, doğal görünümlü uzatma; istediğiniz boy ve formda." },
+  { "id": "manikur", "name": "Manikür", "icon": "hand", "duration": 45, "desc": "Bakım, şekillendirme ve kütikül temizliğiyle ellerinize yenilenmiş bir görünüm." },
+  { "id": "kalici-oje", "name": "Kalıcı Oje", "icon": "drop", "duration": 60, "desc": "Haftalarca bozulmayan, parlak ve canlı renkler; nail art seçenekleriyle." },
+  { "id": "kirpik", "name": "Kirpik", "icon": "lash", "duration": 90, "desc": "Gözlerinizi öne çıkaran, hafif ve doğal duran kirpik uygulamaları." },
+  { "id": "kirpik-lifting", "name": "Kirpik Lifting", "icon": "eye", "duration": 60, "desc": "Kendi kirpiklerinizi kıvırıp yukarı kaldıran, rimelsiz açık bakış." },
+  { "id": "kas-laminasyonu", "name": "Kaş Laminasyonu", "icon": "brow", "duration": 45, "desc": "Kaşlarınızı düzenleyip dolgun, yukarı taranmış ve pürüzsüz gösteren işlem." }
+]
